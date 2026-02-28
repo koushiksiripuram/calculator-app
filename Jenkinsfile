@@ -8,6 +8,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "koushiksiripuram/calculator-app:1.0"
+        KUBECONFIG = "/home/koushik/.kube/config"
     }
 
     stages {
