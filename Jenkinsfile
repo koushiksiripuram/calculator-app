@@ -2,13 +2,15 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven3'
-        jdk 'jdk17'
+        maven 'Maven3'
+        jdk 'JDK21'
+    }
+
+    environment {
+        DOCKER_IMAGE = "koushiksiripuram/calculator-app:1.0"
     }
 
     stages {
-
-        
 
         stage('Build & Test') {
             steps {
@@ -22,20 +24,28 @@ pipeline {
             }
         }
 
-        stage('Install to Local Repo') {
+        stage('Build Docker Image') {
             steps {
-                sh 'mvn install'
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Library JAR packaged and installed successfully'
-            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
+            }
         }
-        failure {
-            echo 'Build failed'
+
+        stage('Push Docker Image') {
+            steps {
+                sh 'docker push $DOCKER_IMAGE'
+            }
         }
     }
 }
